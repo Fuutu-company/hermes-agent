@@ -93,46 +93,41 @@ services:
         max-size: "10m"
         max-file: "5"
 
-  dashboard:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: hermes-dashboard
-    restart: unless-stopped
-    command: dashboard --host 0.0.0.0
-    environment:
-      # ------------------------------------------------------------------
-      # EXTERNAL EXPOSURE — DISABLED
-      # Uncomment the next line AND assign a domain in Coolify to expose
-      # the web dashboard. The dashboard has NO built-in authentication —
-      # always add a Traefik basic-auth middleware before enabling.
-      # Until then, access it via SSH tunnel:
-      #   ssh -L 9119:localhost:9119 user@your-coolify-host
-      # then open http://localhost:9119 locally.
-      # - SERVICE_FQDN_DASHBOARD_9119
-      # ------------------------------------------------------------------
-      - GATEWAY_HEALTH_URL=http://hermes:8642
-      - GATEWAY_HEALTH_TIMEOUT=3
-      - HERMES_UID=10000
-      - HERMES_GID=10000
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - hermes_data:/opt/data
-    expose:
-      - "9119"
-    depends_on:
-      hermes:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
+  # --------------------------------------------------------------------
+  # Dashboard service removed for now — uncomment to re-enable.
+  # It reuses the hermes image (no separate build) and runs the web UI
+  # on port 9119. Reach it via:
+  #   ssh -L 9119:localhost:9119 user@your-coolify-host
+  # then open http://localhost:9119 locally.
+  # --------------------------------------------------------------------
+  # dashboard:
+  #   image: piuyn2y20ikxeqlewq4mjmru_hermes:latest  # update to actual image name
+  #   container_name: hermes-dashboard
+  #   restart: unless-stopped
+  #   command: dashboard --host 0.0.0.0
+  #   depends_on:
+  #     hermes:
+  #       condition: service_healthy
+  #   environment:
+  #     - GATEWAY_HEALTH_URL=http://hermes:8642
+  #     - GATEWAY_HEALTH_TIMEOUT=3
+  #     - HERMES_UID=10000
+  #     - HERMES_GID=10000
+  #     - PYTHONUNBUFFERED=1
+  #   volumes:
+  #     - hermes_data:/opt/data
+  #   expose:
+  #     - "9119"
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 512M
+  #         cpus: '0.5'
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "5"
 
 volumes:
   hermes_data:

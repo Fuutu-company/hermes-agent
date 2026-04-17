@@ -42,5 +42,8 @@ USER root
 RUN chmod +x /opt/hermes/docker/entrypoint.sh
 
 ENV HERMES_HOME=/opt/data
+# Put the venv on PATH so `hermes` works in `docker exec` shells without
+# needing to source the venv manually.
+ENV PATH=/opt/hermes/.venv/bin:$PATH
 VOLUME [ "/opt/data" ]
 ENTRYPOINT [ "/opt/hermes/docker/entrypoint.sh" ]

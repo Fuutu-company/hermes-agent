@@ -40,12 +40,17 @@ services:
       # in config.yaml before enabling.
       # - SERVICE_FQDN_HERMES_8642
       # ------------------------------------------------------------------
-      # --- LLM providers (set at least one) ---
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # --- LLM provider ---
+      # Using ChatGPT OAuth (Codex) — no API key needed, auth happens via
+      # device-code login (see README section below). Requires a paid ChatGPT
+      # subscription (Plus / Pro / Team / Enterprise).
+      - HERMES_INFERENCE_PROVIDER=openai-codex
+      # Alternative API-key-based providers (uncomment if you prefer):
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      # - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      # - GEMINI_API_KEY=${GEMINI_API_KEY}
       # --- Telegram ---
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_ALLOWED_USERS=${TELEGRAM_ALLOWED_USERS}

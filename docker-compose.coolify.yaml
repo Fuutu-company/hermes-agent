@@ -60,6 +60,14 @@ services:
       - BROWSERBASE_PROJECT_ID=${BROWSERBASE_PROJECT_ID}
       - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
       - PARALLEL_API_KEY=${PARALLEL_API_KEY}
+      # --- API Server (required for healthcheck + dashboard) ---
+      # The gateway exposes an OpenAI-compatible API on port 8642.
+      # Bound to 0.0.0.0 so the dashboard container can reach it via
+      # the Docker network; protected by API_SERVER_KEY (generate with
+      # `openssl rand -hex 32` and set in Coolify secrets).
+      - API_SERVER_ENABLED=true
+      - API_SERVER_HOST=0.0.0.0
+      - API_SERVER_KEY=${API_SERVER_KEY}
       # --- Runtime ---
       - HERMES_UID=10000
       - HERMES_GID=10000

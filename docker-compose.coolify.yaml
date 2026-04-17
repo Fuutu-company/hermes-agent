@@ -1,0 +1,113 @@
+# Coolify deployment for Hermes Agent (Gateway + Dashboard)
+# ---------------------------------------------------------
+# Usage in Coolify:
+#   1. Create resource "Docker Compose" pointing at this file.
+#   2. Set environment variables as Coolify Secrets (see list below).
+#   3. Deploy.
+#
+# Telegram-only setup (most secure): leave all domain fields empty in Coolify.
+# The bot connects outbound via long-polling — no inbound ports required.
+#
+# Required secrets:
+#   - At least one provider: ANTHROPIC_API_KEY or OPENAI_API_KEY or OPENROUTER_API_KEY
+#   - TELEGRAM_BOT_TOKEN         (from @BotFather)
+#   - TELEGRAM_ALLOWED_USERS     (your numeric Telegram user id, comma-separated)
+#
+# Optional:
+#   - TELEGRAM_HOME_CHANNEL      (chat id for cron deliveries)
+#   - BROWSERBASE_API_KEY / BROWSERBASE_PROJECT_ID
+#   - FIRECRAWL_API_KEY
+#   - PARALLEL_API_KEY
+#
+# Never run more than one `hermes` service against the same volume:
+# sessions and memory stores are not safe for concurrent writes.
+
+services:
+  hermes:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hermes
+    restart: unless-stopped
+    command: gateway run
+    shm_size: '1gb'
+    environment:
+      # Coolify magic label — attaches Traefik route + Let's-Encrypt to port 8642
+      # Remove this line if you do NOT want the gateway API reachable from the internet.
+      - SERVICE_FQDN_HERMES_8642
+      # --- LLM providers (set at least one) ---
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # --- Telegram ---
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_ALLOWED_USERS=${TELEGRAM_ALLOWED_USERS}
+      - TELEGRAM_HOME_CHANNEL=${TELEGRAM_HOME_CHANNEL}
+      # --- Optional tool integrations ---
+      - BROWSERBASE_API_KEY=${BROWSERBASE_API_KEY}
+      - BROWSERBASE_PROJECT_ID=${BROWSERBASE_PROJECT_ID}
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      - PARALLEL_API_KEY=${PARALLEL_API_KEY}
+      # --- Runtime ---
+      - HERMES_UID=10000
+      - HERMES_GID=10000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - hermes_data:/opt/data
+    expose:
+      - "8642"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8642/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hermes-dashboard
+    restart: unless-stopped
+    command: dashboard --host 0.0.0.0
+    environment:
+      # Remove this line to keep the dashboard fully private (access only via `docker exec` / SSH tunnel).
+      - SERVICE_FQDN_DASHBOARD_9119
+      - GATEWAY_HEALTH_URL=http://hermes:8642
+      - GATEWAY_HEALTH_TIMEOUT=3
+      - HERMES_UID=10000
+      - HERMES_GID=10000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - hermes_data:/opt/data
+    expose:
+      - "9119"
+    depends_on:
+      hermes:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  hermes_data:
+    name: hermes_data

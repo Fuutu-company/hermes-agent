@@ -32,9 +32,14 @@ services:
     command: gateway run
     shm_size: '1gb'
     environment:
-      # Coolify magic label — attaches Traefik route + Let's-Encrypt to port 8642
-      # Remove this line if you do NOT want the gateway API reachable from the internet.
-      - SERVICE_FQDN_HERMES_8642
+      # ------------------------------------------------------------------
+      # EXTERNAL EXPOSURE — DISABLED
+      # Uncomment the next line AND assign a domain in Coolify to expose
+      # the OpenAI-compatible gateway API (port 8642) to the internet.
+      # WARNING: exposes an LLM endpoint. Protect with Bearer-token auth
+      # in config.yaml before enabling.
+      # - SERVICE_FQDN_HERMES_8642
+      # ------------------------------------------------------------------
       # --- LLM providers (set at least one) ---
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -83,8 +88,16 @@ services:
     restart: unless-stopped
     command: dashboard --host 0.0.0.0
     environment:
-      # Remove this line to keep the dashboard fully private (access only via `docker exec` / SSH tunnel).
-      - SERVICE_FQDN_DASHBOARD_9119
+      # ------------------------------------------------------------------
+      # EXTERNAL EXPOSURE — DISABLED
+      # Uncomment the next line AND assign a domain in Coolify to expose
+      # the web dashboard. The dashboard has NO built-in authentication —
+      # always add a Traefik basic-auth middleware before enabling.
+      # Until then, access it via SSH tunnel:
+      #   ssh -L 9119:localhost:9119 user@your-coolify-host
+      # then open http://localhost:9119 locally.
+      # - SERVICE_FQDN_DASHBOARD_9119
+      # ------------------------------------------------------------------
       - GATEWAY_HEALTH_URL=http://hermes:8642
       - GATEWAY_HEALTH_TIMEOUT=3
       - HERMES_UID=10000
